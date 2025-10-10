@@ -1,0 +1,42 @@
+{
+  "typeCheckingMode": "strict",
+  "reportInvalidTypeForm": "warning",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+  "reportUndefinedVariable": true,
+  "reportUnusedImport": true,
+  "reportUnusedVariable": "warning",
+  "reportPrivateUsage": false,
+  "reportUnknownMemberType": false,
+  "reportUnknownArgumentType": false,
+  "reportUnknownVariableType": false,
+  "reportUnknownLambdaType": false,
+  "reportInvalidTypeVarUse": false,
+  "reportAttributeAccessIssue": false,
+  "reportCallIssue": false,
+  "reportOptionalSubscript": false,
+  "reportOptionalMemberAccess": false,
+  "reportOptionalCall": false,
+  "reportOptionalIterable": false,
+  "reportOptionalContextManager": false,
+  "reportUnnecessaryTypeIgnoreComment": false,
+  "reportUnnecessaryCast": false,
+  "useLibraryCodeForTypes": true,
+  "exclude": [
+    "**/migrations",
+    "**/__pycache__",
+    ".venv"
+  ],
+  "include": [
+    "app"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "./",
+      "extraPaths": [
+        "./app",
+        "./.venv/lib/python3.13/site-packages"
+      ]
+    }
+  ]
+}
