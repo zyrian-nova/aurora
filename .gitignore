@@ -1,0 +1,72 @@
+# ---- System files ----
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ---- Environment files ----
+.env
+.env.*
+.secrets/
+secrets.json
+config.json
+
+# ---- Editors / IDEs ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# Virtual environments
+.venv/
+.env/
+env/
+venv/
+.venv-*/
+.pdm-python
+
+# ---- Python / Django ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+*.log
+*.sqlite3
+*.db
+
+# Django cache & build artifacts
+*.pot
+*.mo
+*.pyc
+backend/staticfiles/
+backend/static/
+backend/media/
+backend/.mypy_cache/
+backend/.pytest_cache/
+backend/.ruff_cache/
+backend/.cove
+
+# ---- PDM ----
+__pypackages__/
+pdm.lock
+
+# ---- Node / React (Vite) ----
+frontend/node_modules/
+frontend/.vite/
+frontend/dist/
+frontend/.env
+frontend/.DS_Store
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# ---- Misc ----
+*.tmp
+*.orig
+*.rej
+*.tar.gz
+*.zip
