@@ -1,3 +1,3 @@
 """
-Main APP folder
+Main APP directory
 """

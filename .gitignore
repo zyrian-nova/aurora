@@ -1,17 +1,24 @@
-# ---- System files ----
+# System files
 .DS_Store
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+*.rej
 
-# ---- Environment files ----
+# Environment files & Secrets
 .env
 .env.*
+!.env.example
 .secrets/
 secrets.json
 config.json
 
-# ---- Editors / IDEs ----
+# Editors / IDEs
 .vscode/
 .idea/
 *.swp
@@ -26,11 +33,12 @@ venv/
 .venv-*/
 .pdm-python
 
-# ---- Python / Django ----
+# Python bytecode & cache
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.pyc
 *.so
 *.egg
 *.egg-info/
@@ -38,33 +46,87 @@ __pycache__/
 *.sqlite3
 *.db
 
-# Django cache & build artifacts
-*.pot
-*.mo
-*.pyc
-backend/staticfiles/
-backend/static/
-backend/media/
-backend/.mypy_cache/
-backend/.pytest_cache/
-backend/.ruff_cache/
-backend/.cove
+# Celery
+celerybeat-schedule
+celerybeat.pid
 
-# ---- PDM ----
+# Logs & databases
+*.log
+*.sqlite3
+*.db
+*.db-journal
+
+# Testing & type checking
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# PDM
 __pypackages__/
 pdm.lock
 
+# FastAPI / Uvicorn
+backend/staticfiles/
+backend/static/
+backend/media/
+
 # ---- Node / React (Vite) ----
+# Dependencies
 frontend/node_modules/
-frontend/.vite/
+frontend/.pnp
+frontend/.pnp.js
+
+# Build outputs
 frontend/dist/
+frontend/build/
+frontend/.vite/
+frontend/.svelte-kit/
+
+# Environment
 frontend/.env
-frontend/.DS_Store
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Logs
 frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
 
-# ---- Misc ----
+# Testing
+frontend/coverage/
+
+# Docker volumes & data
+docker/postgres/data/
+docker/redis/data/
+*.log
+
+# Docker Compose override (for local dev)
+docker-compose.override.yml
+
+# Ollama data (if mounted locally)
+ollama_data/
+
+# PostgreSQL
+*.sql.backup
+*.dump
+postgres_data/
+
+# SSL certificates (use secrets manager in prod)
+docker/nginx/certs/*.pem
+docker/nginx/certs/*.key
+docker/nginx/certs/*.crt
+
+# Nginx logs
+docker/nginx/logs/*.log
+
+# Misc
 *.tmp
 *.orig
 *.rej
