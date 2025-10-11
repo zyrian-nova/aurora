@@ -1,0 +1,15 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "Salvador González", email = "zyrian@mylocker.dev"},
+]
+dependencies = ["ollama>=0.6.0", "fastapi>=0.118.2", "tortoise-orm>=0.25.1", "uvicorn>=0.37.0", "dotenv>=0.9.9"]
+requires-python = "==3.13.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
