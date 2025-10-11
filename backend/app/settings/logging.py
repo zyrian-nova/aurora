@@ -152,3 +152,13 @@ def setup_logging(
     # Set up uvicorn's logger to match
     uvicorn_logger = logging.getLogger("uvicorn")
     uvicorn_logger.setLevel(getattr(logging, log_level.upper()))
+
+    uvicorn_access = logging.getLogger("uvicorn.acess")
+    uvicorn_access.setLevel(logging.WARNING) # less verbose for access logs
+
+    return aurora_logger.get_logger()
+
+# Convenience function for module loggers
+def get_logger(name: str) -> logging.Logger:
+    """Get child logger for a specific module."""
+    return logging.getLogger(f"aurora.{name}")
