@@ -5,7 +5,7 @@ import sys
 import logging
 from pathlib import Path
 from typing import Optional
-from app.settings.config import settings
+from app.settings import settings
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
 class ColoredFormatter(logging.Formatter):

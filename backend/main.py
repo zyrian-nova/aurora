@@ -4,9 +4,8 @@ Backend entrypoint for Aurora
 import random
 import uvicorn
 import datetime
-from app.settings.config import settings
 from contextlib import asynccontextmanager
-from app.settings.logging import setup_logging, get_logger
+from app.settings import setup_logging, get_logger, settings
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -60,8 +59,8 @@ async def root():
     }
 
 # Time Endpoint (EXAMPLE)
-@app.get("/time")
-async def get_time():
+@app.get("/time", response_model=dict[str, str])
+async def get_time() -> dict[str, str]:
     """Return the current UTC and local time."""
     now = datetime.datetime.now()
     utc = datetime.datetime.now(datetime.UTC)
@@ -74,7 +73,7 @@ async def get_time():
     }
 
 # Motivational phrase (EXAMPLE)
-@app.get("/motivation")
+@app.get("/motivation", response_model=dict[str, str])
 async def get_motivation() -> dict[str,str]:
     """Return a daily motivational quote."""
     phrases = [
@@ -110,7 +109,7 @@ async def generic_error(request: Request, exc: Exception):
     )
     # Don't leak internal errors in production
     if settings.ENVIRONMENT == "production":
-        detail = "An internal error ocurred"
+        detail = "An internal error occurred"
     else:
         detail = str(exc)
 
