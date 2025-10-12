@@ -5,6 +5,7 @@ import sys
 import logging
 from pathlib import Path
 from typing import Optional
+from app.settings.config import settings
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 
 class ColoredFormatter(logging.Formatter):
@@ -76,12 +77,12 @@ class AuroraLogger:
         if settings.ENVIRONMENT == "development":
             formatter = ColoredFormatter(
                 fmt="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-                datefmt="%Y-%m-%d %H:&M:%S"
+                datefmt="%Y-%m-%d %H:%M:%S"
             )
         else:
             formatter = logging.Formatter(
                 fmt="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-                datefmt="%Y-%m-%d %H:&M:%S"
+                datefmt="%Y-%m-%d %H:%M:%S"
             )
 
         handler.setFormatter(formatter)
@@ -153,7 +154,7 @@ def setup_logging(
     uvicorn_logger = logging.getLogger("uvicorn")
     uvicorn_logger.setLevel(getattr(logging, log_level.upper()))
 
-    uvicorn_access = logging.getLogger("uvicorn.acess")
+    uvicorn_access = logging.getLogger("uvicorn.access")
     uvicorn_access.setLevel(logging.WARNING) # less verbose for access logs
 
     return aurora_logger.get_logger()
