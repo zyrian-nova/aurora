@@ -6,7 +6,9 @@ from tortoise import fields
 from datetime import datetime
 from tortoise.models import Model
 from models.rss_feed import UserRSSFeed
+from models.site_status import SiteStatus
 from models.subreddit import UserSubreddit
+from models.monitored_site import MonitoredSite
 from models.user_preferences import UserPreferences
 
 
@@ -46,6 +48,8 @@ class User(Model):
     preferences: fields.ReverseRelation["UserPreferences"]
     rss_subscriptions: fields.ReverseRelation["UserRSSFeed"]
     subreddit_subscriptions: fields.ReverseRelation["UserSubreddit"]
+    monitored_sites: fields.ReverseRelation["MonitoredSite"]
+    site_checks: fields.ReverseRelation["SiteStatus"]
 
     class Meta: # type: ignore
         table = "users"

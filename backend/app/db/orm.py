@@ -15,9 +15,12 @@ TORTOISE_ORM = {
         "models": {
             "models": [
                 "app.models.user",
-                "app.models.daily_cache",
-                "app.models.site_status",
                 "app.models.user_preferences",
+                "app.models.rss_feed",
+                "app.models.subreddit",
+                "app.models.monitored_site",
+                "app.models.site_status",
+                "app.models.daily_cache",
                 "aerich.models" # This is required for migrations
             ],
             "default_connection": "default",

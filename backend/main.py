@@ -3,7 +3,7 @@ Backend entrypoint for Aurora
 """
 import random
 import uvicorn
-import datetime
+from datetime import datetime
 from contextlib import asynccontextmanager
 from app.settings import setup_logging, get_logger, settings
 from fastapi import FastAPI, Request
@@ -62,8 +62,8 @@ async def root():
 @app.get("/time", response_model=dict[str, str])
 async def get_time() -> dict[str, str]:
     """Return the current UTC and local time."""
-    now = datetime.datetime.now()
-    utc = datetime.datetime.now(datetime.UTC)
+    now = datetime.now()
+    utc = datetime.now(datetime.UTC)
 
     app_logger.debug("Time endpoint accessed")
 
