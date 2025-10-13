@@ -4,7 +4,7 @@ Monitored website models.
 import uuid
 from tortoise import fields
 from typing import Optional
-from models import SiteStatus
+from app.models.site_status import SiteStatus
 from tortoise.models import Model
 
 class MonitoredSite(Model):

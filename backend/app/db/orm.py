@@ -2,7 +2,8 @@
 Tortoise-ORM database initialization.
 """
 from tortoise import Tortoise
-from app.settings import get_logger, settings
+from app.settings import get_logger
+from app.settings.config import settings
 
 logger = get_logger(__name__)
 

@@ -3,13 +3,13 @@ User model for authentication.
 """
 import uuid
 from tortoise import fields
-from datetime import datetime
+from datetime import datetime, timezone
 from tortoise.models import Model
-from models.rss_feed import UserRSSFeed
-from models.site_status import SiteStatus
-from models.subreddit import UserSubreddit
-from models.monitored_site import MonitoredSite
-from models.user_preferences import UserPreferences
+from app.models.rss_feed import UserRSSFeed
+from app.models.site_status import SiteStatus
+from app.models.subreddit import UserSubreddit
+from app.models.monitored_site import MonitoredSite
+from app.models.user_preferences import UserPreferences
 
 
 class User(Model):
@@ -63,5 +63,5 @@ class User(Model):
 
     async def update_last_login(self) -> None:
         """Update the last_login timestamp."""
-        self.last_login = datetime.now(datetime.UTC)
+        self.last_login = datetime.now(timezone.utc)
         await self.save(update_fields=["last_login"])

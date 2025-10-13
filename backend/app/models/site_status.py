@@ -2,7 +2,7 @@
 Site status check history.
 """
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from tortoise import fields
 from tortoise.models import Model
 
@@ -34,7 +34,7 @@ class SiteStatus(Model):
 
     # Timestamps
     checked_at = fields.DatetimeField(
-        default=datetime.now(datetime.UTC),
+        default=datetime.now(timezone.utc),
         index=True
     )
 
