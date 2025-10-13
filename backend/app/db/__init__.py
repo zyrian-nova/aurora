@@ -1,4 +1,9 @@
 """
 Database initialization and configuration
 """
-# Add init and close db
+from app.db.orm import init_db, close_db
+
+__all__ = [
+    "init_db",
+    "close_db"
+]
