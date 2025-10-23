@@ -5,7 +5,7 @@ import random
 import uvicorn
 from datetime import datetime
 from contextlib import asynccontextmanager
-from app.settings import setup_logging, get_logger, settings
+from app.settings import settings, setup_logging, get_logger
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware

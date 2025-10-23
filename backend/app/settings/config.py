@@ -2,8 +2,7 @@
 Configuration management for Aurora.
 """
 from typing import List
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import BaseSettings, Field
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
@@ -18,7 +17,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = Field(default="", env="REDIS_URL")
 
     # JSON Web Token
-    JWT_SECRET: str = "maybe-add-it-to-env"
+    JWT_SECRET: str = Field(default="maybe-add-it-to-env")
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 360
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
