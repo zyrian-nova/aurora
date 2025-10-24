@@ -1,8 +1,9 @@
 """
 Configuration management for Aurora.
 """
-from typing import List
-from pydantic import BaseSettings, Field
+from typing import Any, List
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
@@ -23,7 +24,7 @@ class Settings(BaseSettings):
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # CORS
-    CORS_ORIGINS: List[str] = Field(default=["http://localhost:5173"], env="CORS_ORIGINS")
+    CORS_ORIGINS: Any = Field(default=["http://localhost:5173"])
 
     # Ollama
     OLLAMA_HOST: str = Field(default="http://localhost:11434", env="OLLAMA_HOST")
@@ -31,6 +32,19 @@ class Settings(BaseSettings):
     # External APIs
     WEATHER_API_KEY: str = Field(default="", env="WEATHER_API_KEY")
     NEWS_API_KEY: str = Field(default="", env="NEWS_API_KEY")
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v) -> List[str]:
+        """Parse comma-separated string or list."""
+        if isinstance(v, str):
+            # Remove any whitespace and split by comma
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        # If it's already a list (from default or testing), return as-is
+        if isinstance(v, list):
+            return v
+        # Fallback
+        return []
 
     # Model
     model_config = SettingsConfigDict(
