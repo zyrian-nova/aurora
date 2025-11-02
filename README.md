@@ -1,6 +1,33 @@
 # Aurora
 
-## Working Directory
+Personal start page with weather, news, AI quotes, and website monitoring.
+
+## Tech Stack
+- **Backend:** Python 3.13, FastAPI, Tortoise-ORM, PostgreSQL
+- **Frontend:** React 18, Vite, Tailwind CSS 4.1
+- **Task Queue:** Celery + Redis
+- **AI:** Ollama (local LLM)
+- **Deployment:** Docker?, Nginx?, OpenStack?
+
+## Getting Started
+
+### Prerequisites
+- Python 3.13+
+- PostgreSQL 16+
+- PDM (Python package manager)
+- Node.js 20+ (for frontend)
+
+### Backend Setup
+1. Install dependencies: `pdm install`
+2. Copy `.env.example` to `.env` and configure
+3. Start PostgreSQL (see docker-compose.yml)
+4. Initialize database: `aerich upgrade`
+5. Run server: `python main.py`
+
+### Frontend Setup
+(Coming soon)
+
+## Project Structure
 
 The following is the sugested directory tree (subject to changes).
 
@@ -103,8 +130,9 @@ aurora/
 │   │
 │   └── src/
 │       ├── main.jsx                     # React entry point
+│       ├── App.css                      # Tailwind import
 │       ├── App.jsx                      # Root component with routing
-│       ├── index.css                    # Tailwind import
+│       ├── index.css                    # (Default: remove)
 │       │
 │       ├── pages/                       # Page components
 │       │   ├── Dashboard.jsx            # Main authenticated page
@@ -149,5 +177,5 @@ aurora/
 │
 ├── .gitignore
 ├── .env.example                         # Global env template
-└── README.md
+└── README.md                            # Global README (this file)
 ```
