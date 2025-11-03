@@ -1,14 +1,14 @@
 """
 Configuration management for Aurora.
 """
-from typing import Any, List
+from typing import Any, List, Union
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     # Environment
-    ENVIRONMENT: str = Field(default="development", env="ENVIRONMENT")
+    ENVIRONMENT: str = Field(default="production", env="ENVIRONMENT")
     LOG_LEVEL: str = Field(default="INFO", env="LOG_LEVEL")
 
     # Database
@@ -28,6 +28,7 @@ class Settings(BaseSettings):
 
     # Ollama
     OLLAMA_HOST: str = Field(default="http://localhost:11434", env="OLLAMA_HOST")
+    OLLAMA_MODEL: str = Field(default="llama3.2", env="OLLAMA_MODEL")
 
     # External APIs
     WEATHER_API_KEY: str = Field(default="", env="WEATHER_API_KEY")
@@ -35,16 +36,13 @@ class Settings(BaseSettings):
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
-    def parse_cors_origins(cls, v) -> List[str]:
+    def parse_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
         """Parse comma-separated string or list."""
         if isinstance(v, str):
             # Remove any whitespace and split by comma
             return [origin.strip() for origin in v.split(",") if origin.strip()]
-        # If it's already a list (from default or testing), return as-is
-        if isinstance(v, list):
-            return v
-        # Fallback
-        return []
+        # Directly return v if it's a list, otherwise return an empty list
+        return v or []
 
     # Model
     model_config = SettingsConfigDict(
