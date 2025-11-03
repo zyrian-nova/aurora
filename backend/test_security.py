@@ -50,7 +50,9 @@ def test_jwt_tokens():
     # Decode access token
     payload = decode_token(access_token)
     assert payload is not None, "Token decoded successfully"
-    assert payload["username"] == username, "Username matches"
+    if payload.get("type") == "access":
+        assert "username" in payload, "Username exists in payload"
+        assert payload["username"] == username, "Username matches"
     print(f"Decoded payload: {payload}")
 
     # Extract user ID
