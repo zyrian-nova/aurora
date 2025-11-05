@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 DataT = TypeVar("DataT")
 
 # Success Responses
-class SuccessResponses(BaseModel, Generic[DataT]):
+class SuccessResponse(BaseModel, Generic[DataT]):
     """Generic success response wrapper."""
     success: bool = True
     message: str
@@ -31,7 +31,7 @@ class ValidationErrorDetail(BaseModel):
     field: str
     message: str
 
-class ValidationErrorResponse():
+class ValidationErrorResponse(BaseModel):
     """Validation error response with field details."""
     success: bool = False
     error: str = "Validation error"
