@@ -10,6 +10,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
+# Routes
+from app.api import api_router
 
 # Logging start
 logger = setup_logging()
@@ -46,6 +48,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# API router
+app.include_router(api_router)
 
 # Root endpoint
 @app.get("/")
