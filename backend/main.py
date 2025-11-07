@@ -2,6 +2,7 @@
 Backend entrypoint for Aurora
 """
 import random
+from tortoise import Tortoise
 import uvicorn
 from datetime import datetime
 from contextlib import asynccontextmanager
@@ -26,10 +27,28 @@ async def lifespan(app: FastAPI):
     app_logger.info(f"Environment: {settings.ENVIRONMENT}")
     app_logger.info(f"Database: {settings.DATABASE_URL.split('@')[-1]}")
 
+    # Initialize Tortoise ORM
+    await Tortoise.init(
+        db_url=settings.DATABASE_URL,
+        modules={"models": [
+            "app.models.daily_cache",
+            "app.models.monitored_site",
+            "app.models.rss_feed",
+            "app.models.site_status",
+            "app.models.subreddit",
+            "app.models.user",
+            "app.models.user_preferences",
+        ]}
+    )
+    await Tortoise.generate_schemas()
+    app_logger.info("Database initialized successfully")
+
     # Everything after this yield runs *after* the app starts
     yield
 
     # Shutdown
+    app_logger.info("Closing database connections...")
+    await Tortoise.close_connections()
     app_logger.info("Aurora backend is shutting down...")
 
 # Starting the app

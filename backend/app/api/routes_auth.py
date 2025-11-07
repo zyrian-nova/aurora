@@ -111,7 +111,7 @@ async def login(credentials: LoginRequest) -> TokenResponse:
 async def refresh_token(request: RefreshTokenRequest) -> TokenResponse:
     """Get new access token using refresh token."""
     # Verify if it's a refresh token
-    if not verify_token_type(request.refres_token, "refresh"):
+    if not verify_token_type(request.refresh_token, "refresh"):
         logger.warning("Invalid token type for refresh")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -120,7 +120,7 @@ async def refresh_token(request: RefreshTokenRequest) -> TokenResponse:
         )
 
     # Extract user ID
-    user_id = get_user_id_from_token(request.refres_token)
+    user_id = get_user_id_from_token(request.refresh_token)
     if not user_id:
         logger.warning("Invalid or expired refresh token")
         raise HTTPException(

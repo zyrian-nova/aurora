@@ -12,7 +12,7 @@ class LoginRequest(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     """Schema for token refresh."""
-    refres_token: str = Field(min_length=1)
+    refresh_token: str = Field(min_length=1)
 
 # Response schemas
 class TokenResponse(BaseModel):
