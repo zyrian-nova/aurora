@@ -55,6 +55,8 @@ celerybeat.pid
 *.sqlite3
 *.db
 *.db-journal
+logs
+migrations
 
 # Testing & type checking
 .pytest_cache/
