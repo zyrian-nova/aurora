@@ -1,12 +1,20 @@
 """
 Backend entrypoint for Aurora
 """
+import os
+import sys
+import pytz
+import time
+import socket
 import random
-from tortoise import Tortoise
 import uvicorn
+import platform
+from typing import Any, Dict
+from tortoise import connections
+from tortoise import Tortoise
 from datetime import datetime
 from contextlib import asynccontextmanager
-from app.settings import settings, setup_logging, get_logger
+from app.settings import settings, get_logger, setup_logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,42 +22,39 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 # Routes
 from app.api import api_router
 
+# Saves the startup time of the app
+START_TIME = time.time()
+
 # Logging start
 logger = setup_logging()
-app_logger = get_logger(__name__)
 
 # Events (startup & shutdown)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Logs the app start and shutdown."""
     # Start
-    app_logger.info("Aurora backend is starting up...")
-    app_logger.info(f"Environment: {settings.ENVIRONMENT}")
-    app_logger.info(f"Database: {settings.DATABASE_URL.split('@')[-1]}")
+    logger.info("Aurora backend is starting up...")
+    logger.info(f"Environment: {settings.ENVIRONMENT}")
+    logger.info(f"Database: {settings.DATABASE_URL.split('@')[-1]}")
 
     # Initialize Tortoise ORM
     await Tortoise.init(
         db_url=settings.DATABASE_URL,
         modules={"models": [
-            "app.models.daily_cache",
-            "app.models.monitored_site",
-            "app.models.rss_feed",
-            "app.models.site_status",
-            "app.models.subreddit",
-            "app.models.user",
-            "app.models.user_preferences",
+            "app.models",
         ]}
     )
-    await Tortoise.generate_schemas()
-    app_logger.info("Database initialized successfully")
+    if settings.ENVIRONMENT != "production":
+        await Tortoise.generate_schemas()
+    logger.info("Database initialized successfully")
 
     # Everything after this yield runs *after* the app starts
     yield
 
     # Shutdown
-    app_logger.info("Closing database connections...")
+    logger.info("Closing database connections...")
     await Tortoise.close_connections()
-    app_logger.info("Aurora backend is shutting down...")
+    logger.info("Aurora backend is shutting down...")
 
 # Starting the app
 app = FastAPI(
@@ -75,12 +80,114 @@ app.include_router(api_router)
 @app.get("/")
 async def root():
     """Endpoint to health check."""
-    app_logger.debug("Root endpoint accessed")
+    logger.debug("Root endpoint accessed")
     return {
-        "message": "Welcome to Aurora 🌄",
         "status": "online",
-        "version": app.version
+        "message": "Welcome to Aurora 🌄"
     }
+
+# Healthcheck endpoint for devs
+@app.get("/health")
+async def health() -> Dict[str, Any]:
+    """Healthcheck with two levels: production and development."""
+    hostname = None
+    env = (settings.ENVIRONMENT or "").strip().lower()
+
+    # Production mode or ENV variable empty
+    if env in ("production", ""):
+        logger.info("Healthy app: production")
+        return {
+            "status": "healthy",
+            "message:": "Healthy app"
+        }
+
+    # Development / testing environments
+    debug_envs = {"debug", "dev", "testing", "develop", "development"}
+
+    if env in debug_envs:
+        logger.info(f"App in debug mode: {env}")
+        tz_name = getattr(settings, "APP_TIME_ZONE", "UTC")
+        try:
+            zone = pytz.timezone(tz_name)
+            server_time = datetime.now(zone).isoformat()
+        except Exception:
+            server_time = datetime.now().isoformat()
+
+        # Simple status from DB (without exposing sensible data)
+        try:
+            conn = connections.get("default")
+            start = time.time()
+            await conn.execute_query("SELECT 1")
+            latency = round((time.time() - start) * 1000, 2)
+            db_status = {"connected": True, "latency_ms": latency}
+        except Exception:
+            db_status = {"connected": False, "latency_ms": None}
+
+        # Local IP
+        try:
+            hostname = socket.gethostname()
+            local_ip = socket.gethostbyname(hostname)
+        except Exception:
+            local_ip = "unknown"
+
+        uptime_seconds = round(time.time() - START_TIME, 2)
+
+        return {
+            "app": {
+                "title": app.title,
+                "description": app.description,
+                "version": app.version,
+                "environment": env,
+            },
+            "server": {
+                "hostname": hostname,
+                "local_ip": local_ip,
+                "python_version": platform.python_version(),
+                "system": platform.system(),
+                "release": platform.release(),
+                "timezone": tz_name,
+                "server_time": server_time,
+                "process": {
+                    "pid": os.getpid(),
+                    "uptime": uptime_seconds,
+                    "executable": sys.executable,
+                },
+            "database": db_status,
+            }
+        }
+
+    # Unknowkn environment
+    logger.warning(f"Environment variable not found or missing in .env file: {env}")
+    return {
+        "status": "Active",
+        "message": "Unknowkn environment",
+        "environment": env,
+    }
+
+# Checks if the proccess is still running
+@app.get("/health/liveness", summary="Liveness probe")
+async def liveness():
+    return {"status": "ok"}
+
+# Determines if the app is ready to recieve traffic
+@app.get("/health/readiness", summary="Readiness probe")
+async def readiness():
+    try:
+        # Fast ping to the DB (similar to SELECT 1)
+        conn = connections.get("default")
+        await conn.execute_query("SELECT 1")
+        return {"status": "ready"}
+    except Exception:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unready"}
+        )
+
+# Determines if the app has already finished its startup
+@app.get("/health/startup", summary="Startup probe")
+async def startup_probe():
+    # Consider startup completed when lifespan reached the yield (which it did)
+    return {"status": "started"}
 
 # Time Endpoint (EXAMPLE)
 @app.get("/time", response_model=dict[str, str])
@@ -89,7 +196,7 @@ async def get_time() -> dict[str, str]:
     now = datetime.now()
     utc = datetime.now(datetime.UTC)
 
-    app_logger.debug("Time endpoint accessed")
+    logger.debug("Time endpoint accessed")
 
     return {
         "local_time": now.strftime("%Y-%m-%d %H:%M:%S"),
@@ -109,14 +216,14 @@ async def get_motivation() -> dict[str,str]:
     ]
 
     quote = random.choice(phrases)
-    app_logger.info(f"Serving motivation: {quote}")
+    logger.info(f"Serving motivation: {quote}")
     return {"quote": quote}
 
 # Custom error handler
 @app.exception_handler(404)
 async def not_found(request: Request, exc: StarletteHTTPException):
     """Handle 404 errors."""
-    app_logger.warning(f"404 Not Found: {request.url.path}")
+    logger.warning(f"404 Not Found: {request.url.path}")
     return JSONResponse(
         status_code=404,
         content={"error": "Endpoint not found", "path": request.url.path}
@@ -127,7 +234,7 @@ async def not_found(request: Request, exc: StarletteHTTPException):
 async def generic_error(request: Request, exc: Exception):
     """Catch-all exception handler."""
     # Full log
-    app_logger.error(
+    logger.error(
         f"Unhandled error on: {request.url.path}: {exc}",
         exc_info=True
     )
@@ -135,7 +242,7 @@ async def generic_error(request: Request, exc: Exception):
     if settings.ENVIRONMENT == "production":
         detail = "An internal error occurred"
     else:
-        detail = str(exc)
+        detail = repr(exc)
 
     # Client response
     return JSONResponse(
