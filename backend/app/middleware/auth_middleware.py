@@ -3,6 +3,7 @@ Authentication middleware and dependencies.
 Reusable FastAPI dependencies for JWT authentication.
 """
 from uuid import UUID
+from typing import Annotated
 from fastapi import HTTPException, status
 from fastapi.params import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -16,7 +17,7 @@ logger = get_logger(__name__)
 security = HTTPBearer()
 
 # Token extraction & validation
-async def get_token_from_header(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+async def get_token_from_header(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]) -> str:
     """Extract JWT token from Authorization header."""
     if not credentials or not credentials.credentials:
         raise HTTPException(
@@ -27,7 +28,7 @@ async def get_token_from_header(credentials: HTTPAuthorizationCredentials = Depe
 
     return credentials.credentials
 
-async def verify_access_token(token: str = Depends(get_token_from_header)) -> UUID:
+async def verify_access_token(token: Annotated[str, Depends(get_token_from_header)]) -> UUID:
     """Verify that token is a valid access token and extract user ID."""
     # Verify it's an access token (not refresh)
     if not verify_token_type(token, "access"):
@@ -51,7 +52,7 @@ async def verify_access_token(token: str = Depends(get_token_from_header)) -> UU
     return user_id
 
 # User dependencies
-async def get_current_user(user_id: UUID = Depends(verify_access_token)) -> User:
+async def get_current_user(user_id: Annotated[UUID, Depends(verify_access_token)]) -> User:
     """Get current authenticated user from database."""
     user = await get_user_by_id(user_id)
 
@@ -72,7 +73,7 @@ async def get_current_user(user_id: UUID = Depends(verify_access_token)) -> User
     logger.debug(f"Authenticated user: {user.username}")
     return user
 
-async def get_current_active_user(user: User = Depends(get_current_user)) -> User:
+async def get_current_active_user(user: Annotated[User, Depends(get_current_user)]) -> User:
     """Get current active user (same as get_current_user but more explicit)."""
     # Already checked in get_current_user, but keeping for explicitness
     if not user.is_active:
@@ -83,7 +84,7 @@ async def get_current_active_user(user: User = Depends(get_current_user)) -> Use
 
     return user
 
-async def get_current_superuser(user: User = Depends(get_current_user)) -> User:
+async def get_current_superuser(user: Annotated[User, Depends(get_current_user)]) -> User:
     """Get current user and verify they are a superuser (admin)."""
     if not user.is_superuser:
         logger.warning(f"Non-superuser attempted admin access: {user.username}")
@@ -92,10 +93,12 @@ async def get_current_superuser(user: User = Depends(get_current_user)) -> User:
             detail="User account is inactive"
         )
 
+    return user
+
 # Optional authentication if needed
 
 # Refresh token validation
-async def verify_refresh_token(token: str = Depends(get_token_from_header)) -> UUID:
+async def verify_refresh_token(token: Annotated[str, Depends(get_token_from_header)]) -> UUID:
     """Verify that token is a valid refresh token and extract user ID."""
     # Verify it's a refresh token and not an access token
     if not verify_token_type(token, "refresh"):
@@ -119,10 +122,10 @@ async def verify_refresh_token(token: str = Depends(get_token_from_header)) -> U
     return user_id
 
 # Covenience functions
-async def get_current_user_id(user: User = Depends(get_current_user)) -> UUID:
+async def get_current_user_id(user: Annotated[User, Depends(get_current_user)]) -> UUID:
     """Get just the current user's ID (convenience wrapper)."""
     return user.id
 
-async def get_current_username(user: User = Depends(get_current_user)) -> str:
+async def get_current_username(user: Annotated[User, Depends(get_current_user)]) -> str:
     """Get just the user's username (convenience wrapper)."""
     return user.username
