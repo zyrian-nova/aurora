@@ -1,11 +1,9 @@
 """
 User management routes - Profile and preferences management.
 """
-from uuid import UUID
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.models import User
-from app.api.routes_auth import get_current_user_id, get_current_user
+from app.api.routes_auth import get_current_user
 from app.settings import get_logger
 from app.schemas import ErrorResponse, MessageResponse, PasswordChange, UserPrederencesSchema, UserPreferencesUpdate, UserResponse, UserUpdate
 from app.services import change_user_password, delete_user, get_user_preferences, update_user_preferences, update_user_profile
@@ -51,15 +49,15 @@ async def update_profile(update_data: UserUpdate, current_user: Annotated[UserUp
         401: {"model": ErrorResponse, "description": "Not authenticated"},
     }
 )
-async def change_password(password_data: PasswordChange, user_id: str = Depends(get_current_user_id)) -> MessageResponse:
+async def change_password(password_data: PasswordChange, current_user: Annotated[UserUpdate, Depends(get_current_user)]) -> MessageResponse:
     """Change user's password."""
-    success = await change_user_password(UUID(user_id), password_data.current_password, password_data.new_password)
+    success = await change_user_password(current_user.id, password_data.current_password, password_data.new_password)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Current password is incorrect"
         )
-    logger.info(f"Password changed for user: {user_id}")
+    logger.info(f"Password changed for user: {current_user.username}")
 
     return MessageResponse(message="Password changed successfully")
 
@@ -71,15 +69,15 @@ async def change_password(password_data: PasswordChange, user_id: str = Depends(
         401: {"model": ErrorResponse, "description": "Not authenticated"},
     }
 )
-async def delete_account(user_id: str = Depends(get_current_user_id)) -> MessageResponse:
+async def delete_account(current_user: Annotated[UserUpdate, Depends(get_current_user)]) -> MessageResponse:
     """Delete current user's account (soft delete - deactivates account)."""
-    success = await delete_user(UUID(user_id))
+    success = await delete_user(current_user.id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    logger.info(f"Account deleted for user: {user_id}")
+    logger.info(f"Account deleted for user: {current_user.username}")
 
     return MessageResponse(message="Account successfully deleted")
 
@@ -93,9 +91,9 @@ async def delete_account(user_id: str = Depends(get_current_user_id)) -> Message
         404: {"model": ErrorResponse, "description": "Preferences not found"},
     }
 )
-async def get_preferences(user_id: str = Depends(get_current_user_id)) -> UserPrederencesSchema:
+async def get_preferences(current_user: Annotated[UserPrederencesSchema, Depends(get_current_user)]) -> UserPrederencesSchema:
     """Get current user's preferences."""
-    preferences = await get_user_preferences(UUID(user_id))
+    preferences = await get_user_preferences(current_user.id)
     if not preferences:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -112,14 +110,14 @@ async def get_preferences(user_id: str = Depends(get_current_user_id)) -> UserPr
         401: {"model": ErrorResponse, "description": "Not suthenticated"},
     }
 )
-async def update_preferences(preferences_data: UserPreferencesUpdate, user_id: str = Depends(get_current_user_id)) -> UserPrederencesSchema:
+async def update_preferences(preferences_data: UserPreferencesUpdate, current_user: Annotated[UserPrederencesSchema, Depends(get_current_user)]) -> UserPrederencesSchema:
     """Update user preferences."""
-    preferences = await update_user_preferences(UUID(user_id), preferences_data)
+    preferences = await update_user_preferences(current_user.id, preferences_data)
     if not preferences:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
         )
-    logger.info(f"Preferences updated for user: {user_id}")
+    logger.info(f"Preferences updated for user: {current_user.username}")
 
     return UserPrederencesSchema.model_validate(preferences)
