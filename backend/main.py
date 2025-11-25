@@ -12,9 +12,9 @@ import platform
 from typing import Any, Dict
 from tortoise import connections
 from tortoise import Tortoise
-from datetime import datetime
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
-from app.settings import settings, get_logger, setup_logging
+from app.settings import settings, setup_logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -194,7 +194,7 @@ async def startup_probe():
 async def get_time() -> dict[str, str]:
     """Return the current UTC and local time."""
     now = datetime.now()
-    utc = datetime.now(datetime.UTC)
+    utc = datetime.now(timezone.utc)
 
     logger.debug("Time endpoint accessed")
 

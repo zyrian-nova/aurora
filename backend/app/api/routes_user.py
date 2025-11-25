@@ -2,8 +2,10 @@
 User management routes - Profile and preferences management.
 """
 from uuid import UUID
+from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.api.routes_auth import get_current_user_id
+from app.models import User
+from app.api.routes_auth import get_current_user_id, get_current_user
 from app.settings import get_logger
 from app.schemas import ErrorResponse, MessageResponse, PasswordChange, UserPrederencesSchema, UserPreferencesUpdate, UserResponse, UserUpdate
 from app.services import change_user_password, delete_user, get_user_preferences, update_user_preferences, update_user_profile
@@ -22,10 +24,10 @@ router = APIRouter(prefix="/user", tags=["User management"])
         401: {"model": ErrorResponse, "description": "Not authenticated"},
     }
 )
-async def update_profile(update_data: UserUpdate, user_id: str = Depends(get_current_user_id)) -> UserResponse:
+async def update_profile(update_data: UserUpdate, current_user: Annotated[UserUpdate, Depends(get_current_user)]) -> UserResponse:
     """Update current user's profile."""
     try:
-        user = await update_user_profile(UUID(user_id), update_data)
+        user = await update_user_profile(current_user.id,update_data)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

@@ -1,75 +1,20 @@
 """
 Authentication routes - Register, login, refresh, and user info endpoints.
 """
+from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from app.settings import create_access_token, create_refresh_token, get_logger, get_user_id_from_token, verify_token_type
+from app.models import User
+from app.settings import create_access_token, create_refresh_token, get_logger
 from app.schemas import ErrorResponse, LoginRequest, MessageResponse, RefreshTokenRequest, TokenResponse, UserCreate, UserResponse, UserWithPreferences
 from app.services import authenticate_user, create_user, get_user_by_id, get_user_with_preferences
+from app.middleware import get_current_superuser, get_current_user, get_current_user_id
 
 logger = get_logger(__name__)
 
 # Router instance
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-# Security scheme
-security = HTTPBearer()
-
-# Helper functions
-async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
-    """Extract and validate user ID from JWT token."""
-    token = credentials.credentials
-
-    # Verify it's an access token (not refresh token)
-    if not verify_token_type(token, "access"):
-        logger.warning("Invalid token type user for authentication")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token type",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    # Extract user ID
-    user_id = get_user_id_from_token(token)
-    if not user_id:
-        logger.warning("Invalid or expired token")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    return str(user_id)
-
 # Public endpoints
-@router.post(
-    "/register",
-    response_model=UserResponse,
-    status_code=status.HTTP_201_CREATED,
-    responses={
-        201: {"description": "User successfully registered"},
-        400: {"model": ErrorResponse, "description": "Validation error or duplicate user"},
-    }
-)
-async def register(user_data: UserCreate) -> UserResponse:
-    """Register a new user account."""
-    try:
-        user = await create_user(user_data)
-        logger.info(f"New user registered: {user.username}")
-        return UserResponse.model_validate(user)
-    except ValueError as e:
-        logger.warning(f"Registration failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except Exception as e:
-        logger.error(f"Unexpected error during registration: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Registration failed"
-        )
-
 @router.post(
     "/login",
     response_model=TokenResponse,
@@ -105,11 +50,13 @@ async def login(credentials: LoginRequest) -> TokenResponse:
     response_model=TokenResponse,
     responses={
         200: {"description": "Tokens refreshed successfully"},
-        402: {"model": ErrorResponse, "description": "Invalid refresh token"},
+        401: {"model": ErrorResponse, "description": "Invalid refresh token"},
     }
 )
 async def refresh_token(request: RefreshTokenRequest) -> TokenResponse:
     """Get new access token using refresh token."""
+    from app.settings import verify_token_type, get_user_id_from_token
+
     # Verify if it's a refresh token
     if not verify_token_type(request.refresh_token, "refresh"):
         logger.warning("Invalid token type for refresh")
@@ -119,17 +66,17 @@ async def refresh_token(request: RefreshTokenRequest) -> TokenResponse:
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Extract user ID
+    # Extract user id
     user_id = get_user_id_from_token(request.refresh_token)
     if not user_id:
         logger.warning("Invalid or expired refresh token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired refresh token",
+            detail="invalid or expired refresh token",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Get user to verify they still exist and are active
+    # Verify if the user exists or is active
     user = await get_user_by_id(user_id)
     if not user or not user.is_active:
         logger.warning(f"Refresh attempt for inactive/deleted user: {user_id}")
@@ -151,6 +98,36 @@ async def refresh_token(request: RefreshTokenRequest) -> TokenResponse:
     )
 
 # Protected endpoints
+@router.post(
+    "/register",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        201: {"description": "User successfully registered"},
+        400: {"model": ErrorResponse, "description": "Validation error or duplicate user"},
+        401: {"model": ErrorResponse, "description": "Not authenticated"},
+        403: {"model": ErrorResponse, "description": "Not authorized - superuser required"},
+    }
+)
+async def register(user_data: UserCreate, admin: Annotated[User, Depends(get_current_superuser)]) -> UserResponse:
+    """Register a new user account (Admin only)."""
+    try:
+        user = await create_user(user_data)
+        logger.info(f"New user registered by admin {admin.username}: {user.username}")
+        return UserResponse.model_validate(user)
+    except ValueError as e:
+        logger.warning(f"Registration failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error during registration: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Registration failed"
+        )
+
 @router.get(
     "/me",
     response_model=UserWithPreferences,
@@ -159,14 +136,12 @@ async def refresh_token(request: RefreshTokenRequest) -> TokenResponse:
         401: {"model": ErrorResponse, "description": "Not authenticated"},
     }
 )
-async def get_current_user(user_id: str = Depends(get_current_user_id)) -> UserWithPreferences:
+async def get_current_user_info(current_user: Annotated[User, Depends(get_current_user)]) -> UserWithPreferences:
     """Get current authenticade user's information."""
-    from uuid import UUID
-
     # Extract the user ID
-    user = await get_user_with_preferences(UUID(user_id))
+    user = await get_user_with_preferences(current_user.id)
     if not user:
-        logger.error(f"User not found for valid token: {user_id}")
+        logger.error(f"User not found for valid token: {current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
@@ -189,7 +164,7 @@ async def get_current_user(user_id: str = Depends(get_current_user_id)) -> UserW
         200: {"description": "Successfully logged out"},
     }
 )
-async def logout(user_id: str = Depends(get_current_user_id)) -> MessageResponse:
+async def logout(user_id: Annotated[str, Depends(get_current_user_id)]) -> MessageResponse:
     """
     Logout current user.
 

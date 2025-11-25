@@ -105,7 +105,7 @@ async def verify_refresh_token(token: Annotated[str, Depends(get_token_from_head
         logger.warning("Invalid token type for refresh")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="invalid refresh token",
+            detail="Invalid refresh token",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -115,7 +115,7 @@ async def verify_refresh_token(token: Annotated[str, Depends(get_token_from_head
         logger.warning("Invalid or expired refresh token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="invalid or expired refresh token",
+            detail="Invalid or expired refresh token",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
